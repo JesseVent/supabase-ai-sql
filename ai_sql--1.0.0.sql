@@ -5,8 +5,8 @@
 -- ─── Quick start ──────────────────────────────────────────────────────────────
 --
 --   1. Install from dbdev
---        select dbdev.install('supabase/ai-sql');
---        create extension "supabase/ai-sql";
+--        select dbdev.install('JesseVent/supa_aisql');
+--        create extension "JesseVent/supa_aisql";
 --
 --   2. Store your Supabase personal access token in Vault (one time)
 --        select vault.create_secret('sbp_xxxx', 'ai_access_token');

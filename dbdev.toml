@@ -1,5 +1,5 @@
 [package]
-name = "ai_sql"
+name = "supa_aisql"
 version = "1.0.0"
 description = "AI inference SQL functions for Supabase — completions, classification, sentiment, extraction, translation, redaction, and embeddings. Self-deploys its own edge function via ai.deploy()."
 homepage = "https://github.com/JesseVent/ai-sql"

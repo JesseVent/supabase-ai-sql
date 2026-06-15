@@ -49,8 +49,8 @@ The edge function source is embedded directly in the SQL file (zero imports, raw
 From the SQL editor or `psql`:
 
 ```sql
-select dbdev.install('supabase/ai-sql');
-create extension "supabase/ai-sql";
+select dbdev.install('JesseVent/supa_aisql');
+create extension "JesseVent/supa_aisql";
 ```
 
 > **Note:** [database.dev](https://database.dev) must be enabled on your project. If it isn't, follow the [dbdev setup guide](https://database.dev/installer).
