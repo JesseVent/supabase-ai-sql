@@ -2,7 +2,7 @@
 --
 -- Self-deploying AI inference extension for Supabase / dbdev.
 --
--- ─── Quick start ──────────────────────────────────────────────────────────────
+-- ─── Quick start ──────────────────────────────────────────────────
 --
 --   1. Install from dbdev
 --        select dbdev.install('JesseVent/supa_aisql');
@@ -20,12 +20,12 @@
 --        Or via the dashboard: Settings → Edge Functions → Secrets
 --
 --   4. Use from any SQL query
---        select ai_complete2('Write a Postgres haiku.');
+--        select ai_complete('Write a Postgres haiku.');
 --        select id, ai_sentiment(body) from posts;
 --        select category, ai_summarize_agg(description)
 --          from products group by category;
 --
--- ─── How it works ─────────────────────────────────────────────────────────────
+-- ─── How it works ───────────────────────────────────────────────
 --
 --   ai.deploy() reads your sbp_ token from Vault, then calls the Supabase
 --   Management API to:
@@ -37,14 +37,14 @@
 --   Every public.ai_* function routes through public._ai_call(), which reads
 --   the config at runtime and POSTs to /functions/v1/ai on your project.
 --
--- ─── Security model ───────────────────────────────────────────────────────────
+-- ─── Security model ────────────────────────────────────────────
 --
 --   sbp_ token        — Vault only; never a SQL parameter
 --   OpenAI key        — set via CLI/dashboard; never stored in DB or passed via SQL
 --   Anon key          — stored in ai._config; already a public credential
 --   AI functions      — SECURITY DEFINER; REVOKED from public, granted to authenticated only
 --
--- ─── Providers ────────────────────────────────────────────────────────────────
+-- ─── Providers ───────────────────────────────────────────────────
 --
 --   provider => 'openai'   (default) — gpt-5.4-mini + text-embedding-3-small
 --                                      Points to OPENAI_BASE_URL (default: https://api.openai.com/v1)
@@ -53,18 +53,18 @@
 --   provider => 'supabase' — Supabase built-in inference (Mistral, no extra cost)
 --                             No API key needed; runs in Edge Function runtime
 
-\echo Use "CREATE EXTENSION \"supabase/ai-sql\"" to load this file. \quit
+\echo Use "CREATE EXTENSION \"JesseVent/supa_aisql\"" to load this file. \quit
 
--- ─── Dependencies ─────────────────────────────────────────────────────────────
+-- ─── Dependencies ──────────────────────────────────────────────────
 
 create extension if not exists http          with schema extensions;
 create extension if not exists supabase_vault with schema vault;
 
--- ─── Schema ───────────────────────────────────────────────────────────────────
+-- ─── Schema ──────────────────────────────────────────────────────
 
 create schema if not exists ai;
 
--- ─── Config table ─────────────────────────────────────────────────────────────
+-- ─── Config table ─────────────────────────────────────────────────
 
 create table if not exists ai._config (
   key   text primary key,
@@ -73,7 +73,7 @@ create table if not exists ai._config (
 
 revoke all on ai._config from public;
 
--- ─── Embedded edge function source ────────────────────────────────────────────
+-- ─── Embedded edge function source ───────────────────────────────────
 
 create or replace function ai._edge_function_source()
 returns text language sql immutable
@@ -221,7 +221,7 @@ export default {
 $EFSOURCE$;
 $WRAPPER$;
 
--- ─── ai.deploy() ──────────────────────────────────────────────────────────────
+-- ─── ai.deploy() ────────────────────────────────────────────────
 --
 -- Reads your sbp_ personal access token from Vault, then:
 --   1. Fetches the project anon key from the Management API
@@ -329,7 +329,7 @@ comment on function ai.deploy(text) is
   'Vault (name: ai_access_token). Set OPENAI_API_KEY separately via: '
   'supabase secrets set OPENAI_API_KEY=sk-... (keeps key out of SQL logs entirely).';
 
--- ─── ai.status() ──────────────────────────────────────────────────────────────
+-- ─── ai.status() ────────────────────────────────────────────────
 
 create or replace function ai.status()
 returns jsonb
@@ -348,7 +348,7 @@ $$;
 comment on function ai.status() is
   'Returns extension version, configuration state, and whether the Vault access token is present.';
 
--- ─── public._ai_call() ────────────────────────────────────────────────────────
+-- ─── public._ai_call() ─────────────────────────────────────────
 
 create or replace function public._ai_call(payload jsonb)
 returns jsonb
@@ -403,12 +403,12 @@ $$;
 comment on function public._ai_call(jsonb) is
   'Internal: POST payload to /functions/v1/ai. Reads endpoint config from ai._config.';
 
--- ─── Scalar functions ─────────────────────────────────────────────────────────
+-- ─── Scalar functions ──────────────────────────────────────────
 -- All user-facing functions are SECURITY DEFINER (run as owner) but REVOKED from
 -- public so only the `authenticated` role can call them. This prevents anonymous
 -- callers from triggering OpenAI calls and running up your bill.
 
-create or replace function public.ai_complete2(
+create or replace function public.ai_complete(
   input_text  text,
   system_text text default null,
   model_name  text default null,
@@ -419,10 +419,10 @@ declare body jsonb; begin
   return body->>'text';
 end; $$;
 
-comment on function public.ai_complete2(text,text,text,text) is
-  'Free-form LLM completion. provider: ''openai'' (default, gpt-4o-mini) via raw fetch to OpenAI API.';
-revoke all     on function public.ai_complete2(text,text,text,text) from public;
-grant  execute on function public.ai_complete2(text,text,text,text) to   authenticated;
+comment on function public.ai_complete(text,text,text,text) is
+  'Free-form LLM completion. provider: ''openai'' (default, gpt-5.4-mini) via raw fetch to OpenAI API.';
+revoke all     on function public.ai_complete(text,text,text,text) from public;
+grant  execute on function public.ai_complete(text,text,text,text) to   authenticated;
 
 create or replace function public.ai_classify(
   input_text text,
@@ -518,7 +518,7 @@ comment on function public.ai_redact(text,text[],text,text) is
 revoke all     on function public.ai_redact(text,text[],text,text) from public;
 grant  execute on function public.ai_redact(text,text[],text,text) to   authenticated;
 
--- ─── Aggregate support ────────────────────────────────────────────────────────
+-- ─── Aggregate support ──────────────────────────────────────────
 --
 -- Safety caps (per-session GUCs):
 --   set ai_agg.max_items = 100;   -- max rows accumulated per group (default 100)
