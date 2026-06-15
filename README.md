@@ -1,4 +1,4 @@
-# ai_sql
+# Supabase AI SQL functions
 
 > Call LLMs directly from SQL on Supabase — completions, classification, sentiment, extraction, translation, redaction, and embeddings.
 
