@@ -323,9 +323,9 @@ The edge function source embedded in the SQL file is always in sync with the ins
 |---|---|
 | `No access token found in Vault` | Run step 2 — `vault.create_secret(...)` with the name `ai_access_token`. |
 | `OPENAI_API_KEY secret is not set` | The edge function is deployed but the secret isn't. Set it via CLI/dashboard, then retry (no re-deploy needed). |
-| `Failed to fetch API keys (HTTP 401)` | Your Vault token is expired/invalid. Create a new one: `select vault.update_secret('sbp_new...', 'ai_access_token');` |
+| `Failed to fetch API keys (HTTP 401)` | Your Vault token is expired/invalid. Recreate it: `delete from vault.secrets where name = 'ai_access_token'; select vault.create_secret('sbp_new...', 'ai_access_token');` |
 | `ai_sql extension not configured` | `ai.deploy()` hasn't run yet, or config was cleared. Re-run it. |
-| `embed action requires provider=openai` | Switch to `provider => 'openai'` for `ai_embed`. |
+| `Supabase built-in inference does not support embeddings. Use provider=openai.` | Switch to `provider => 'openai'` for `ai_embed`. |
 
 ---
 
